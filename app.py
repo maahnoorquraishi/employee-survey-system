@@ -13,7 +13,7 @@ st.set_page_config(
 )
 
 st.sidebar.title("📊 Survey System")
-page = st.sidebar.radio("Navigate", ["📝 Submit Survey", "📈 Dashboard", "📋 All Responses", "📥 Export Data"])
+page = st.sidebar.radio("Navigate", ["📝 Submit Survey", "📈 Dashboard", "📋 All Responses", "📥 Export Data", "🔍 Data Quality", "⚙️ ETL Pipeline"])
 
 if page == "📝 Submit Survey":
     st.title("📝 Employee Engagement Survey")
@@ -132,4 +132,55 @@ elif page == "📥 Export Data":
         st.success(f"Ready to export {len(df)} responses.")
         csv = df.to_csv(index=False).encode('utf-8')
         st.download_button("⬇️ Download as CSV", data=csv, file_name="survey_data.csv", mime="text/csv")
-        
+
+elif page == "🔍 Data Quality":
+    st.title("🔍 Data Quality Checks")
+    from data_quality import run_quality_checks, get_summary_stats
+    df_raw = get_all_responses()
+
+    if df_raw.empty:
+        st.warning("No data yet. Submit some surveys first!")
+    else:
+        st.subheader("Automated Quality Check Results")
+        results, df = run_quality_checks()
+
+        for _, row in results.iterrows():
+            if row['status'] == "PASS":
+                st.success(f"✅ {row['check']} — {row['details']}")
+            elif row['status'] == "WARNING":
+                st.warning(f"⚠️ {row['check']} — {row['details']}")
+            else:
+                st.error(f"❌ {row['check']} — {row['details']}")
+
+        st.markdown("---")
+        st.subheader("Statistical Summary of All Scores")
+        stats = get_summary_stats(df_raw)
+        st.dataframe(stats, use_container_width=True)
+
+elif page == "⚙️ ETL Pipeline":
+    st.title("⚙️ ETL Pipeline")
+    from etl_pipeline import run_etl
+    import os
+
+    st.markdown("This page runs the full ETL pipeline on current survey data.")
+    st.info("Pipeline: Extract from DB → Transform & Clean → Load to processed table → Export CSV")
+
+    if st.button("▶️ Run ETL Pipeline Now"):
+        df = get_all_responses()
+        if df.empty:
+            st.warning("No data to process!")
+        else:
+            df.to_csv("survey_export.csv", index=False)
+            with st.spinner("Running ETL pipeline..."):
+                result = run_etl("survey_export.csv")
+            if result is not None:
+                st.success("✅ ETL Pipeline completed successfully!")
+                st.subheader("Transformed Data Preview")
+                st.dataframe(result.head(10), use_container_width=True)
+
+                if os.path.exists("etl_log.txt"):
+                    st.subheader("ETL Log")
+                    with open("etl_log.txt", "r") as f:
+                        log_content = f.read()
+                    st.code(log_content)
+                    

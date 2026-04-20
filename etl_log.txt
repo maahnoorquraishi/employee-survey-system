@@ -1,0 +1,6 @@
+[2026-04-20 12:32:49] ==================================================
+[2026-04-20 12:32:49] ETL PIPELINE STARTED
+[2026-04-20 12:32:49] ==================================================
+[2026-04-20 12:32:49] EXTRACT: Reading data from survey_export.csv
+[2026-04-20 12:32:49] EXTRACT ERROR: [Errno 2] No such file or directory: 'survey_export.csv'
+[2026-04-20 12:32:49] ETL FAILED: Could not extract data
